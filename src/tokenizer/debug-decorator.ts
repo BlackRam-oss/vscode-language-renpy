@@ -1,9 +1,10 @@
 import { performance } from "perf_hooks";
-import { LogLevel, DecorationOptions, Disposable, ExtensionContext, MarkdownString, Uri, window, workspace } from "vscode";
+import { LogLevel, DecorationOptions, Disposable, ExtensionContext, MarkdownString, Uri, Range as VSRange, window, workspace } from "vscode";
 import { CharacterTokenType, LiteralTokenType, EntityTokenType, EscapedCharacterTokenType, KeywordTokenType, MetaTokenType, OperatorTokenType } from "./renpy-tokens";
 import { TokenTree, tokenTypeToStringMap } from "./token-definitions";
 import { Tokenizer } from "./tokenizer";
 import { logMessage, logToast } from "../logger";
+import { TextDocument } from "../utilities/vscode-wrappers";
 
 let timeout: NodeJS.Timeout | undefined = undefined;
 
@@ -197,7 +198,8 @@ async function updateDecorations() {
 
         // Update tokens only if document has changed
         const t0 = performance.now();
-        tokenCache = await Tokenizer.tokenizeDocument(activeEditor.document);
+        tokenCache = await Tokenizer.tokenizeDocument(new TextDocument(activeEditor.document.getText(new VSRange(0, 0, activeEditor.document.lineCount, 0)), activeEditor.document.uri.fsPath));
+
         const t1 = performance.now();
 
         logToast(LogLevel.Info, `DocumentTokenizer took ${(t1 - t0).toFixed(2)} milliseconds to complete.`);
