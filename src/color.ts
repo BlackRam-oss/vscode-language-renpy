@@ -1,17 +1,18 @@
 // Color conversion methods for Color provider
-import { CancellationToken, Color, ColorInformation, ColorPresentation, DocumentColorProvider, Range, TextDocument, TextEdit, languages } from "vscode";
+import { CancellationToken, Color, ColorInformation, ColorPresentation, DocumentColorProvider, Range as VSRange, TextDocument as VSTextDocument, TextEdit, languages } from "vscode";
 import { ValueEqualsSet } from "./utilities/hashset";
 import { Tokenizer } from "./tokenizer/tokenizer";
 import { LiteralTokenType } from "./tokenizer/renpy-tokens";
 import { TextMateRule, injectCustomTextmateTokens } from "./decorator";
+import { TextDocument } from "./utilities/vscode-wrappers";
 
 export type DocumentColorContext = {
-    document: TextDocument;
-    range: Range;
+    document: VSTextDocument;
+    range: VSRange;
 };
 
 export const colorProvider = languages.registerColorProvider("renpy", {
-    provideDocumentColors(document: TextDocument, token: CancellationToken) {
+    provideDocumentColors(document: VSTextDocument, token: CancellationToken) {
         if (token.isCancellationRequested) {
             return;
         }
@@ -33,7 +34,7 @@ export const colorProvider = languages.registerColorProvider("renpy", {
  * @param document - the TextDocument to search
  * @returns - ColorInformation[] - an array that provides a range and color for each match
  */
-export async function getColorInformation(document: TextDocument) {
+export async function getColorInformation(document: VSTextDocument) {
     await injectCustomColorStyles(document);
 
     // find all colors in the document
@@ -47,7 +48,7 @@ export async function getColorInformation(document: TextDocument) {
                 let start = 0;
                 for (const idx in matches) {
                     const match = matches[idx];
-                    let range = new Range(line.lineNumber, text.indexOf(match, start), line.lineNumber, text.indexOf(match, start) + match.length);
+                    let range = new VSRange(line.lineNumber, text.indexOf(match, start), line.lineNumber, text.indexOf(match, start) + match.length);
                     let color;
 
                     if (match.startsWith('"#') || match.startsWith("'#")) {
@@ -64,7 +65,7 @@ export async function getColorInformation(document: TextDocument) {
                         color = convertRenpyColorToColor(match);
                         if (color) {
                             // shift the range so the color block is inside the Color() declaration
-                            range = new Range(range.start.line, range.start.character + 6, range.end.line, range.end.character);
+                            range = new VSRange(range.start.line, range.start.character + 6, range.end.line, range.end.character);
                         }
                     }
 
@@ -92,7 +93,7 @@ export function getColorPresentations(color: Color, context: DocumentColorContex
     const colors: ColorPresentation[] = [];
     const range = context.range;
     const text = context.document.getText(range);
-    const oldRange = new Range(range.start, range.end);
+    const oldRange = new VSRange(range.start, range.end);
 
     const colR = Math.round(color.red * 255);
     const colG = Math.round(color.green * 255);
@@ -125,9 +126,9 @@ export function getColorPresentations(color: Color, context: DocumentColorContex
     return colors;
 }
 
-export async function injectCustomColorStyles(document: TextDocument) {
+export async function injectCustomColorStyles(document: VSTextDocument) {
     // Disabled until filter is added to the tree class
-    const documentTokens = await Tokenizer.tokenizeDocument(document);
+    const documentTokens = await Tokenizer.tokenizeDocument(new TextDocument(document.getText(new VSRange(0, 0, document.lineCount, 0)), document.uri.fsPath));
     // TODO: Should probably make sure this constant is actually part of a tag, but for now this is fine.
     const colorTags = documentTokens.filter((x) => x.token?.type === LiteralTokenType.Color);
     const colorRules = new ValueEqualsSet<TextMateRule>();

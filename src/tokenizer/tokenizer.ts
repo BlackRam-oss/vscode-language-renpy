@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert } from "console";
 import { performance } from "perf_hooks";
-import { LogLevel, TextDocument, Uri, Range as VSRange, workspace } from "vscode";
+import { workspace } from "vscode";
 import { Token, isRangePattern, isMatchPattern, isRepoPattern, TokenPosition, TokenTree, TreeNode, Range } from "./token-definitions";
 import { RenpyPatterns } from "./token-patterns.g";
 import { Stack } from "../utilities/stack";
@@ -10,6 +10,7 @@ import { TokenPatternCapture, TokenCapturePattern, TokenRepoPattern, TokenRangeP
 import { LogCategory, logCatMessage } from "../logger";
 import { escapeRegExpCharacters } from "../utilities/utils";
 import { isShippingBuild } from "../extension";
+import { DocumentRange, LogLevel, TextDocument } from "../utilities/vscode-wrappers";
 
 interface MatchScanResult {
     pattern: ExTokenPattern;
@@ -35,7 +36,7 @@ const RUN_BENCHMARKS = false;
 
 export class Tokenizer {
     private static _uniquePatternCount = -1;
-    private static _tokenCache = new Map<Uri, TokenCache>();
+    private static _tokenCache = new Map<string, TokenCache>();
 
     public static get UNIQUE_PATTERN_COUNT() {
         return this._uniquePatternCount;
@@ -48,7 +49,7 @@ export class Tokenizer {
             this.benchmark(document);
         }
 
-        const cachedTokens = this._tokenCache.get(document.uri);
+        const cachedTokens = this._tokenCache.get(document.filePath);
         if (cachedTokens?.documentVersion === document.version) {
             return cachedTokens.tokens;
         }
@@ -61,7 +62,7 @@ export class Tokenizer {
     }
 
     private static async runTokenizer(document: TextDocument) {
-        logCatMessage(LogLevel.Info, LogCategory.Tokenizer, `Running tokenizer on document: "${workspace.asRelativePath(document.uri, true)}"`);
+        logCatMessage(LogLevel.Info, LogCategory.Tokenizer, `Running tokenizer on document: "${workspace.asRelativePath(document.filePath, true)}"`);
         const tokenizer = new DocumentTokenizer(document);
 
         const t0 = performance.now();
@@ -78,7 +79,7 @@ export class Tokenizer {
         const t1 = performance.now();
 
         logCatMessage(LogLevel.Info, LogCategory.Tokenizer, `Tokenizer completed in ${(t1 - t0).toFixed(2)}ms`);
-        this._tokenCache.set(document.uri, { documentVersion: document.version, tokens: tokenizer.tokens });
+        this._tokenCache.set(document.filePath, { documentVersion: document.version, tokens: tokenizer.tokens });
         return tokenizer.tokens;
     }
 
@@ -348,7 +349,7 @@ class DocumentTokenizer {
                     logCatMessage(
                         LogLevel.Debug,
                         LogCategory.Tokenizer,
-                        `There is no pattern defined for capture group '${i}', on a pattern that matched '${match[i]}' near L:${pos.line + 1} C:${pos.character + 1}.\nThis should probably be added or be a non-capturing group.`,
+                        `There is no pattern defined for capture group '${i}', on a pattern that matched '${match[i]}' near L:${pos.line + 1} C:${pos.character + 1}.\nThis should probably be added or be a non-capturing group.`
                     );
                 }
 
@@ -668,7 +669,7 @@ class DocumentTokenizer {
             for (const gap of coverageResult.gaps) {
                 const gapStartPos = this.document.positionAt(gap.start);
                 const gapEndPos = this.document.positionAt(gap.end);
-                const text = this.document.getText(new VSRange(gapStartPos, gapEndPos));
+                const text = this.document.getText(new DocumentRange(gapStartPos, gapEndPos));
                 logCatMessage(LogLevel.Debug, LogCategory.Tokenizer, `Gap from L:${gapStartPos.line + 1} C:${gapStartPos.character + 1} to L:${gapEndPos.line + 1} C:${gapEndPos.character + 1}, Text: '${text}'`);
             }
         }
@@ -696,7 +697,7 @@ class DocumentTokenizer {
             for (const gap of coverageResult.gaps) {
                 const gapStartPos = this.document.positionAt(gap.start);
                 const gapEndPos = this.document.positionAt(gap.end);
-                const text = this.document.getText(new VSRange(gapStartPos, gapEndPos));
+                const text = this.document.getText(new DocumentRange(gapStartPos, gapEndPos));
                 logCatMessage(LogLevel.Debug, LogCategory.Tokenizer, `Gap from L${gapStartPos.line + 1}:${gapStartPos.character + 1} to L${gapEndPos.line + 1}:${gapEndPos.character + 1}, Text: '${text}'`);
             }
         }
