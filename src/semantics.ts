@@ -1,45 +1,12 @@
 // Semantic Token Provider
-import { LogLevel, CancellationToken, Position, ProviderResult, Range, SemanticTokens, SemanticTokensBuilder, SemanticTokensLegend, TextDocument, languages, DocumentHighlight, DocumentHighlightKind, window } from "vscode";
-import { Navigation, splitParameters, rangeAsString, getCurrentContext, DataType } from "./navigation";
+
+import { logMessage } from "./logger";
+import { DataType, getCurrentContext, Navigation, rangeAsString, splitParameters } from "./navigation";
 import { NavigationData, updateNavigationData } from "./navigation-data";
 import { stripWorkspaceFromFile } from "./workspace";
-import { logMessage } from "./logger";
-import { Parser } from "./parser/parser";
 
 const tokenTypes = ["class", "parameter", "variable", "keyword"];
 const tokenModifiers = ["declaration", "defaultLibrary"];
-const legend = new SemanticTokensLegend(tokenTypes, tokenModifiers);
-
-export const highlightProvider = languages.registerDocumentHighlightProvider("renpy", {
-    async provideDocumentHighlights(document: TextDocument, position: Position, token: CancellationToken) {
-        if (token.isCancellationRequested) {
-            return;
-        }
-
-        // Test parser version if active document
-        const activeEditor = window.activeTextEditor;
-        if (activeEditor?.document === document) {
-            const program = await Parser.parseDocument(document);
-
-            const word = document.getText(document.getWordRangeAtPosition(position));
-
-            const symbol = program.globalScope.resolve(word);
-            if (symbol) {
-                const highlights: DocumentHighlight[] = [];
-
-                highlights.push(new DocumentHighlight(symbol.definitionLocation.range, DocumentHighlightKind.Write));
-
-                for (const reference of symbol.references) {
-                    highlights.push(new DocumentHighlight(reference.range, DocumentHighlightKind.Read));
-                }
-
-                return highlights;
-            }
-        }
-
-        return Promise.resolve(getDocumentHighlights(document, position));
-    },
-});
 
 export function getDocumentHighlights(document: TextDocument, position: Position) {
     const wordRange = document.getWordRangeAtPosition(position);
@@ -63,24 +30,6 @@ export function getDocumentHighlights(document: TextDocument, position: Position
 
     return highlights;
 }
-
-export const semanticTokensProvider = languages.registerDocumentSemanticTokensProvider(
-    "renpy",
-    {
-        provideDocumentSemanticTokens(document: TextDocument, token: CancellationToken): ProviderResult<SemanticTokens> {
-            if (token.isCancellationRequested) {
-                return;
-            }
-
-            if (document.languageId !== "renpy") {
-                return;
-            }
-
-            return Promise.resolve(getSemanticTokens(document));
-        },
-    },
-    legend,
-);
 
 export function getSemanticTokens(document: TextDocument): SemanticTokens {
     const tokensBuilder = new SemanticTokensBuilder(legend);

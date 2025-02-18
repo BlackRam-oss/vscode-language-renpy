@@ -1,16 +1,8 @@
-import { tokenTypeToString } from "../tokenizer/token-definitions";
 import { TokenType } from "../tokenizer/renpy-tokens";
+import { tokenTypeToString } from "../tokenizer/token-definitions";
 import { Vector } from "../utilities/vector";
-import { Location as VSLocation, Range as VSRange } from "vscode";
+
 import { RpyProgram } from "src/interpreter/program";
-
-VSRange.prototype.toString = function () {
-    return `[L${this.start.line + 1}:C${this.start.character + 1}, L${this.end.line + 1}:C${this.end.character + 1}]`;
-};
-
-VSLocation.prototype.toString = function () {
-    return `${this.uri.toString()} @ ${this.range.toString()}`;
-};
 
 export abstract class ASTNode {
     private static _printIndent = 0;

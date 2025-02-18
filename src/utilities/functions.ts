@@ -1,4 +1,4 @@
-import { TabInputText, Uri, window } from "vscode";
+
 
 /**
  * Gets the URIs of the tabs opened in the editor whose input is of type TabInputText.

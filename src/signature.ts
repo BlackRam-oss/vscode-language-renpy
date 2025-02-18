@@ -1,26 +1,8 @@
 // Signature Provider for Method Signature Help
-import { TextDocument, Position, SignatureHelp, SignatureHelpContext, languages, CancellationToken, ProviderResult } from "vscode";
+
 import { getKeywordPrefix } from "./extension";
 import { getArgumentParameterInfo } from "./navigation";
 import { NavigationData } from "./navigation-data";
-
-export const signatureProvider = languages.registerSignatureHelpProvider(
-    "renpy",
-    {
-        provideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken, context: SignatureHelpContext): ProviderResult<SignatureHelp> {
-            if (token.isCancellationRequested) {
-                return;
-            }
-
-            return new Promise((resolve) => {
-                resolve(getSignatureHelp(document, position, context));
-            });
-        },
-    },
-    "(",
-    ",",
-    "=",
-);
 
 /**
  * Gets method signature help for the keyword at the given position in the given document

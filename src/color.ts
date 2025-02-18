@@ -1,33 +1,15 @@
 // Color conversion methods for Color provider
-import { CancellationToken, Color, ColorInformation, ColorPresentation, DocumentColorProvider, Range as VSRange, TextDocument as VSTextDocument, TextEdit, languages } from "vscode";
-import { ValueEqualsSet } from "./utilities/hashset";
-import { Tokenizer } from "./tokenizer/tokenizer";
-import { LiteralTokenType } from "./tokenizer/renpy-tokens";
+
 import { TextMateRule, injectCustomTextmateTokens } from "./decorator";
+import { LiteralTokenType } from "./tokenizer/renpy-tokens";
+import { Tokenizer } from "./tokenizer/tokenizer";
+import { ValueEqualsSet } from "./utilities/hashset";
 import { TextDocument } from "./utilities/vscode-wrappers";
 
 export type DocumentColorContext = {
     document: VSTextDocument;
     range: VSRange;
 };
-
-export const colorProvider = languages.registerColorProvider("renpy", {
-    provideDocumentColors(document: VSTextDocument, token: CancellationToken) {
-        if (token.isCancellationRequested) {
-            return;
-        }
-
-        return Promise.resolve(getColorInformation(document));
-    },
-
-    provideColorPresentations(color: Color, context: DocumentColorContext, token: CancellationToken) {
-        if (token.isCancellationRequested) {
-            return;
-        }
-
-        return Promise.resolve(getColorPresentations(color, context));
-    },
-} as DocumentColorProvider);
 
 /**
  * Finds all colors in the given document and returns their ranges and color

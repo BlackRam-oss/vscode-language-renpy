@@ -1,7 +1,7 @@
-import { ConfigurationTarget, workspace, LogLevel } from "vscode";
+
 import * as util from "util";
-import { IEquatable, ValueEqualsSet } from "./utilities/hashset";
 import { logMessage } from "./logger";
+import { IEquatable, ValueEqualsSet } from "./utilities/hashset";
 
 export class TextMateRule implements IEquatable<TextMateRule> {
     public scope: string | string[];

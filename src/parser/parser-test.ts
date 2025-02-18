@@ -1,16 +1,9 @@
 import { DocumentParser } from "./parser";
-import { LogLevel, Range as VSRange, window } from "vscode";
-import { RenpyStatementRule } from "./renpy-grammar-rules";
-import { AST } from "./ast-nodes";
-import { LogCategory, logCatMessage } from "../logger";
-import { RpyProgram } from "../interpreter/program";
 
-// Test decorations
-const errorDecorationType = window.createTextEditorDecorationType({
-    color: "red",
-    fontWeight: "bold",
-    textDecoration: "underline wavy 1pt",
-});
+import { RpyProgram } from "../interpreter/program";
+import { LogCategory, logCatMessage } from "../logger";
+import { AST } from "./ast-nodes";
+import { RenpyStatementRule } from "./renpy-grammar-rules";
 
 export async function testParser() {
     const activeEditor = window.activeTextEditor;

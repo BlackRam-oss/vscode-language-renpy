@@ -4,25 +4,25 @@
 
 import * as cp from "child_process";
 import * as fs from "fs";
-import { ExtensionContext, languages, commands, window, TextDocument, Position, debug, Range, workspace, Uri, DebugConfiguration, ProviderResult, DebugConfigurationProviderTriggerKind, tasks, LogLevel, ExtensionMode } from "vscode";
+
 import { colorProvider } from "./color";
-import { getStatusBarText, NavigationData } from "./navigation-data";
-import { cleanUpPath, getAudioFolder, getImagesFolder, getNavigationJsonFilepath, getWorkspaceFolder, stripWorkspaceFromFile } from "./workspace";
-import { diagnosticsInit } from "./diagnostics";
-import { highlightProvider, semanticTokensProvider } from "./semantics";
-import { hoverProvider } from "./hover";
 import { completionProvider } from "./completion";
-import { definitionProvider } from "./definition";
-import { symbolProvider } from "./outline";
-import { referencesProvider } from "./references";
-import { registerDebugDecorator, unregisterDebugDecorator } from "./tokenizer/debug-decorator";
-import { Tokenizer } from "./tokenizer/tokenizer";
-import { signatureProvider } from "./signature";
-import { initializeLoggingSystems, logMessage, logToast, updateStatusBar } from "./logger";
 import { Configuration } from "./configuration";
 import { RenpyAdapterDescriptorFactory, RenpyConfigurationProvider } from "./debugger";
-import { RenpyTaskProvider } from "./task-provider";
+import { definitionProvider } from "./definition";
+import { diagnosticsInit } from "./diagnostics";
+import { hoverProvider } from "./hover";
+import { initializeLoggingSystems, logMessage, logToast, updateStatusBar } from "./logger";
+import { getStatusBarText, NavigationData } from "./navigation-data";
+import { symbolProvider } from "./outline";
 import { testParser } from "./parser/parser-test";
+import { referencesProvider } from "./references";
+import { highlightProvider, semanticTokensProvider } from "./semantics";
+import { signatureProvider } from "./signature";
+import { RenpyTaskProvider } from "./task-provider";
+import { registerDebugDecorator, unregisterDebugDecorator } from "./tokenizer/debug-decorator";
+import { Tokenizer } from "./tokenizer/tokenizer";
+import { cleanUpPath, getAudioFolder, getImagesFolder, getNavigationJsonFilepath, getWorkspaceFolder, stripWorkspaceFromFile } from "./workspace";
 
 let extensionMode: ExtensionMode = null!;
 

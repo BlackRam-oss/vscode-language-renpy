@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { commands, CompletionItem, CompletionItemKind, CompletionItemTag, LogLevel, MarkdownString, Position, SnippetString, TextDocument, window, workspace } from "vscode";
-import { getDefinitionFromFile } from "./hover";
-import { DataType, getBaseTypeFromDefine, getNamedParameter, getPyDocsFromTextDocumentAtLine, Navigation, splitParameters, stripQuotes } from "./navigation";
-import { cleanUpPath, extractFilenameWithoutExtension, getFileWithPath, getNavigationJsonFilepath, stripWorkspaceFromFile } from "./workspace";
+
 import * as fs from "fs";
-import { Displayable } from "./displayable";
 import { Character } from "./character";
+import { Displayable } from "./displayable";
+import { getDefinitionFromFile } from "./hover";
+import { logMessage, logToast } from "./logger";
+import { DataType, getBaseTypeFromDefine, getNamedParameter, getPyDocsFromTextDocumentAtLine, Navigation, splitParameters, stripQuotes } from "./navigation";
 import data from "./renpy.json";
 import kwData from "./renpyauto.json";
-import { logMessage, logToast } from "./logger";
+import { cleanUpPath, extractFilenameWithoutExtension, getFileWithPath, getNavigationJsonFilepath, stripWorkspaceFromFile } from "./workspace";
 
 const filterCharacter = "\u2588";
 

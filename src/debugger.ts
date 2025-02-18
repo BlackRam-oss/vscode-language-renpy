@@ -1,9 +1,9 @@
-import * as vscode from "vscode";
+
 import { DebugSession, TerminatedEvent } from "@vscode/debugadapter";
-import { getWorkspaceFolder } from "./workspace";
 import { Configuration } from "./configuration";
-import { logToast } from "./logger";
 import { isValidExecutable } from "./extension";
+import { logToast } from "./logger";
+import { getWorkspaceFolder } from "./workspace";
 
 function getTerminal(name: string): vscode.Terminal {
     let i: number;

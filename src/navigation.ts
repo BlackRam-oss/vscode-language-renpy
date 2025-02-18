@@ -1,7 +1,7 @@
 // Navigation classes
 "use strict";
 
-import { MarkdownString, ParameterInformation, Position, Range, SignatureInformation, TextDocument } from "vscode";
+
 import { NavigationData } from "./navigation-data";
 
 export class Navigation {

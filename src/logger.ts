@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ExtensionContext, StatusBarAlignment, window, LogLevel } from "vscode";
-import { isShippingBuild } from "./extension";
 
-const outputChannel = window.createOutputChannel("Ren'Py Language Extension", { log: true });
-const statusBar = window.createStatusBarItem(StatusBarAlignment.Right, 100);
+import { isShippingBuild } from "./extension";
 
 export function initializeLoggingSystems(context: ExtensionContext) {
     context.subscriptions.push(outputChannel);

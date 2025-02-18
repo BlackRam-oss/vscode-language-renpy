@@ -1,4 +1,4 @@
-import { Location as VSLocation } from "vscode";
+
 import { Vector } from "../utilities/vector";
 
 export class RpySymbol {
