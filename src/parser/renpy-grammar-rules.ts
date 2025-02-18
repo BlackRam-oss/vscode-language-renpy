@@ -1,4 +1,5 @@
 import { CharacterTokenType, EntityTokenType, KeywordTokenType, MetaTokenType, OperatorTokenType } from "../tokenizer/renpy-tokens";
+import { Range } from "../tokenizer/token-definitions";
 import {
     AssignmentOperationNode,
     DefaultStatementNode,
@@ -13,9 +14,8 @@ import {
     SayStatementNode,
     StatementNode,
 } from "./ast-nodes";
-import { AssignmentOperationRule, GrammarRule, IntegerLiteralRule, PythonExpressionRule, IdentifierRule, StringLiteralRule, SimpleExpressionRule, ParametersRule } from "./grammar-rules";
+import { AssignmentOperationRule, GrammarRule, IdentifierRule, IntegerLiteralRule, ParametersRule, PythonExpressionRule, SimpleExpressionRule, StringLiteralRule } from "./grammar-rules";
 import { DocumentParser } from "./parser";
-import { Range } from "../tokenizer/token-definitions";
 
 const integerParser = new IntegerLiteralRule();
 const stringParser = new StringLiteralRule();
@@ -143,7 +143,6 @@ export class LabelNameRule extends GrammarRule<LabelNameNode> {
     }
 
     public parse(parser: DocumentParser): LabelNameNode {
-        const start = parser.peekNext().startPos.charStartOffset;
 
         let globalName: string | null = null;
         let localName: string | null = null;
@@ -160,11 +159,8 @@ export class LabelNameRule extends GrammarRule<LabelNameNode> {
                 localName = parser.currentValue();
             }
         }
-        const end = parser.current().endPos.charStartOffset;
 
-        const location = parser.locationFromRange(new Range(start, end).toVSRange(parser.document));
-
-        return new LabelNameNode(location, globalName, localName);
+        return new LabelNameNode("location", globalName, localName);
     }
 }
 
