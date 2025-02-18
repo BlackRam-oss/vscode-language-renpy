@@ -51,24 +51,6 @@ export function logMessage(level: LogLevel, message: string): void {
 export function logCatMessage(level: LogLevel, category: LogCategory, message: string): void {
     const outputMsg = `${getLogCategoryPrefix(category)} > ${message}`;
 
-    switch (level) {
-        case LogLevel.Trace:
-            outputChannel.trace(outputMsg);
-            break;
-        case LogLevel.Debug:
-            outputChannel.debug(outputMsg);
-            break;
-        case LogLevel.Info:
-            outputChannel.info(outputMsg);
-            break;
-        case LogLevel.Warning:
-            outputChannel.warn(outputMsg);
-            break;
-        case LogLevel.Error:
-            outputChannel.error(outputMsg);
-            break;
-    }
-
     debugLog(level, outputMsg);
 }
 

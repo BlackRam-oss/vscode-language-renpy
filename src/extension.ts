@@ -27,7 +27,7 @@ import { cleanUpPath, getAudioFolder, getImagesFolder, getNavigationJsonFilepath
 let extensionMode: ExtensionMode = null!;
 
 export function isShippingBuild(): boolean {
-    return extensionMode !== ExtensionMode.Development;
+    return true;
 }
 
 export async function activate(context: ExtensionContext): Promise<void> {
