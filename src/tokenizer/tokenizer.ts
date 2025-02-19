@@ -62,6 +62,7 @@ export class Tokenizer {
     }
 
     private static async runTokenizer(document: TextDocument) {
+        logCatMessage(LogLevel.Info, LogCategory.Tokenizer, `Running tokenizer on document: "${document.filePath}"`);
         const tokenizer = new DocumentTokenizer(document);
 
         const t0 = performance.now();

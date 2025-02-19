@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { isShippingBuild } from "./extension";
+import { LogLevel } from "./utilities/vscode-wrappers";
 
 export function initializeLoggingSystems(context: ExtensionContext) {
     context.subscriptions.push(outputChannel);
@@ -50,6 +51,24 @@ export function logMessage(level: LogLevel, message: string): void {
 
 export function logCatMessage(level: LogLevel, category: LogCategory, message: string): void {
     const outputMsg = `${getLogCategoryPrefix(category)} > ${message}`;
+
+    switch (level) {
+        case LogLevel.Trace:
+            console.trace(outputMsg);
+            break;
+        case LogLevel.Debug:
+            console.debug(outputMsg);
+            break;
+        case LogLevel.Info:
+            console.info(outputMsg);
+            break;
+        case LogLevel.Warning:
+            console.warn(outputMsg);
+            break;
+        case LogLevel.Error:
+            console.error(outputMsg);
+            break;
+    }
 
     debugLog(level, outputMsg);
 }
