@@ -3,6 +3,7 @@
 import { LogCategory, logCatMessage } from "../logger";
 import { EnumToString } from "../utilities/utils";
 import { Vector } from "../utilities/vector";
+import { DocumentRange, LogLevel, TextDocument  } from "../utilities/vscode-wrappers";
 import { CharacterTokenType, EntityTokenType, EscapedCharacterTokenType, KeywordTokenType, LiteralTokenType, MetaTokenType, OperatorTokenType, TokenType, TokenTypeIndex, TypeOfTokenType } from "./renpy-tokens";
 import { TokenMatchPattern, TokenPattern, TokenRangePattern, TokenRepoPattern } from "./token-pattern-types";
 
@@ -88,6 +89,10 @@ export class Token {
         this.metaTokens = new Vector<TokenType>();
     }
 
+    public getDocumentRange() {
+        return new DocumentRange(this.startPos, this.endPos);
+    }
+
     public getRange() {
         return new Range(this.startPos.charStartOffset, this.endPos.charStartOffset);
     }
@@ -141,7 +146,7 @@ export class Token {
     }
 
     public getValue(document: TextDocument) {
-        return document.getText("");
+        return document.getText(this.getDocumentRange());
     }
 
     public toString() {

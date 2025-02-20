@@ -56,6 +56,14 @@ export class DocumentRange {
     contains(position: number): boolean {
         return position >= this.start.charStartOffset && position <= this.end.charStartOffset;
     }
+
+    length(): number {
+        return this.end.charStartOffset - this.start.charStartOffset
+    }
+
+    toString(): string {
+        return `[L${this.start.line + 1}:C${this.start.character + 1}, L${this.end.line + 1}:C${this.end.character + 1}]`;
+    }
 }
 
 /**
@@ -82,10 +90,10 @@ export class TextDocument {
     }
 
     getText(range?: DocumentRange) {
-        if (!range) return this.text;
-        const offset = this.offsetAt(range.start);
-        const length = this.offsetAt(range.end) - offset;
-        return this.text.substring(offset, length);
+        if (!range) 
+            return this.text;
+        
+        return this.text.substring(range.start.charStartOffset, range.end.charStartOffset);
     }
 
     getWordRangeAtPosition(position: TokenPosition): DocumentRange | undefined {

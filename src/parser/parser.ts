@@ -6,6 +6,7 @@ import { CharacterTokenType, MetaTokenType, TokenType } from "../tokenizer/renpy
 import { Range, Token, TokenListIterator, TokenPosition, tokenTypeToStringMap } from "../tokenizer/token-definitions";
 import { Tokenizer } from "../tokenizer/tokenizer";
 import { Vector } from "../utilities/vector";
+import { DocumentRange, LogLevel, TextDocument  } from "../utilities/vscode-wrappers";
 import { AST, ASTNode } from "./ast-nodes";
 import { GrammarRule } from "./grammar-rules";
 import { RenpyStatementRule } from "./renpy-grammar-rules";
@@ -22,16 +23,16 @@ export interface ParseError {
     currentToken: Token;
     nextToken: Token;
     expectedTokenType: TokenType | null;
-    errorRange: Range;
+    errorRange: DocumentRange;
 }
 
 type DocumentCache = { readonly documentVersion: number; readonly program: RpyProgram };
 
 export class Parser {
-    private static _documentCache = new Map<Uri, DocumentCache>();
+    private static _documentCache = new Map<string, DocumentCache>();
 
     public static async parseDocument(document: TextDocument) {
-        const cachedTokens = this._documentCache.get(document.uri);
+        const cachedTokens = this._documentCache.get(document.filePath);
         if (cachedTokens?.documentVersion === document.version) {
             return cachedTokens.program;
         }
@@ -40,7 +41,7 @@ export class Parser {
     }
 
     private static async runParser(document: TextDocument) {
-        logCatMessage(LogLevel.Info, LogCategory.Parser, `Running parser on document: "${workspace.asRelativePath(document.uri, true)}"`);
+        logCatMessage(LogLevel.Info, LogCategory.Parser, `Running parser on document: "${document.filePath}"`);
 
         const parser = new DocumentParser(document);
         await parser.initialize();
@@ -66,7 +67,7 @@ export class Parser {
         const program = new RpyProgram();
         ast.process(program);
 
-        this._documentCache.set(document.uri, { documentVersion: document.version, program });
+        this._documentCache.set(document.filePath, { documentVersion: document.version, program });
         return program;
     }
 }
@@ -90,16 +91,16 @@ export class DocumentParser {
         return this._document;
     }
 
-    public locationFromCurrent(): VSLocation {
-        return new VSLocation(this._document.uri, this.current().getVSRange());
+    public locationFromCurrent(): DocumentRange {
+        return this.current().getDocumentRange();
     }
 
-    public locationFromNext(): VSLocation {
-        return new VSLocation(this._document.uri, this.peekNext().getVSRange());
+    public locationFromNext(): DocumentRange {
+        return this.peekNext().getDocumentRange();
     }
 
-    public locationFromRange(range: VSRange): VSLocation {
-        return new VSLocation(this._document.uri, range);
+    public locationFromRange(range: DocumentRange): DocumentRange {
+        return range;
     }
 
     // TODO: This should not be user facing code, will lead to bugs. Same for the tokenizer.
@@ -163,7 +164,12 @@ export class DocumentParser {
     }
 
     public peekValue(value: string) {
-        return this.peekNext()?.getValue(this._document) === value ?? false;
+        var next = this.peekNext();
+
+        if (next.type === MetaTokenType.EOF)
+            return "";
+
+        return next.getValue(this._document) === value;
     }
 
     public requireToken(tokenType: TokenType) {
@@ -240,7 +246,7 @@ export class DocumentParser {
                 currentToken: start,
                 nextToken: end,
                 expectedTokenType: null,
-                errorRange: new Range(start.startPos.charStartOffset, end.endPos.charStartOffset),
+                errorRange: new DocumentRange(start.startPos, end.endPos),
             });
         }
         return this.peekAnyOf([CharacterTokenType.NewLine, MetaTokenType.EOF]);
@@ -250,14 +256,14 @@ export class DocumentParser {
         return this._errors;
     }
 
-    public addError(errorType: ParseErrorType, expectedToken: TokenType | null = null, errorRange: Range | null = null) {
+    public addError(errorType: ParseErrorType, expectedToken: TokenType | null = null, errorRange: DocumentRange | null = null) {
         const nextToken = this.peekNext();
         this._errors.pushBack({
             type: errorType,
             currentToken: this.current(),
             nextToken: nextToken,
             expectedTokenType: expectedToken,
-            errorRange: errorRange ?? new Range(nextToken.startPos.charStartOffset, nextToken.endPos.charStartOffset),
+            errorRange: errorRange ?? new DocumentRange(nextToken.startPos, nextToken.endPos),
         });
     }
 

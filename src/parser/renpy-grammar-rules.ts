@@ -1,5 +1,5 @@
 import { CharacterTokenType, EntityTokenType, KeywordTokenType, MetaTokenType, OperatorTokenType } from "../tokenizer/renpy-tokens";
-import { Range } from "../tokenizer/token-definitions";
+import { DocumentRange } from "../utilities/vscode-wrappers";
 import {
     AssignmentOperationNode,
     DefaultStatementNode,
@@ -143,6 +143,7 @@ export class LabelNameRule extends GrammarRule<LabelNameNode> {
     }
 
     public parse(parser: DocumentParser): LabelNameNode {
+        const start = parser.peekNext().startPos;
 
         let globalName: string | null = null;
         let localName: string | null = null;
@@ -159,8 +160,11 @@ export class LabelNameRule extends GrammarRule<LabelNameNode> {
                 localName = parser.currentValue();
             }
         }
+        const end = parser.current().endPos;
 
-        return new LabelNameNode("location", globalName, localName);
+        const location = new DocumentRange(start, end);
+
+        return new LabelNameNode(location, globalName, localName);
     }
 }
 
@@ -204,11 +208,11 @@ export class ImageNameComponentRule extends GrammarRule<IdentifierNode> {
     }
 
     public parse(parser: DocumentParser): IdentifierNode {
-        const start = parser.peekNext().startPos.charStartOffset;
+        const start = parser.peekNext().startPos;
         parser.requireToken(EntityTokenType.ImageName);
         const value = parser.currentValue();
-        const end = parser.current().endPos.charStartOffset;
-        const location = parser.locationFromRange(new Range(start, end).toVSRange(parser.document));
+        const end = parser.current().endPos;
+        const location = new DocumentRange(start, end);
         return new IdentifierNode(location, value);
     }
 }
@@ -225,7 +229,7 @@ export class ImageNameRule extends GrammarRule<ImageNameNode> {
     }
 
     public parse(parser: DocumentParser): ImageNameNode | null {
-        const start = parser.peekNext().startPos.charStartOffset;
+        const start = parser.peekNext().startPos;
 
         const components: IdentifierNode[] = [];
 
@@ -245,8 +249,8 @@ export class ImageNameRule extends GrammarRule<ImageNameNode> {
             return null;
         }
 
-        const end = parser.current().endPos.charStartOffset;
-        const location = parser.locationFromRange(new Range(start, end).toVSRange(parser.document));
+        const end = parser.current().endPos;
+        const location = new DocumentRange(start, end);
         return new ImageNameNode(location, components);
     }
 }

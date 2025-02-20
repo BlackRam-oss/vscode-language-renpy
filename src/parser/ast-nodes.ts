@@ -1,8 +1,9 @@
 import { TokenType } from "../tokenizer/renpy-tokens";
 import { tokenTypeToString } from "../tokenizer/token-definitions";
 import { Vector } from "../utilities/vector";
+import { DocumentRange } from "../utilities/vscode-wrappers";
 
-import { RpyProgram } from "src/interpreter/program";
+import { RpyProgram } from "../interpreter/program";
 
 export abstract class ASTNode {
     private static _printIndent = 0;
@@ -104,11 +105,11 @@ export class ExpressionStatementNode extends StatementNode {
 }
 
 export class FunctionDefinitionNode extends StatementNode {
-    public readonly srcLocation: VSLocation;
+    public readonly srcLocation: DocumentRange;
     public readonly name: string;
     public readonly args: ExpressionNode[];
 
-    constructor(srcLocation: VSLocation, name: string, args: ExpressionNode[]) {
+    constructor(srcLocation: DocumentRange, name: string, args: ExpressionNode[]) {
         super();
         this.srcLocation = srcLocation;
         this.name = name;
@@ -117,11 +118,11 @@ export class FunctionDefinitionNode extends StatementNode {
 }
 
 export class FunctionCallNode extends StatementNode {
-    public readonly srcLocation: VSLocation;
+    public readonly srcLocation: DocumentRange;
     public readonly name: string;
     public readonly args: ExpressionNode[];
 
-    constructor(srcLocation: VSLocation, name: string, args: ExpressionNode[]) {
+    constructor(srcLocation: DocumentRange, name: string, args: ExpressionNode[]) {
         super();
         this.srcLocation = srcLocation;
         this.name = name;
@@ -130,11 +131,11 @@ export class FunctionCallNode extends StatementNode {
 }
 
 export class ClassDefinitionNode extends StatementNode {
-    public readonly srcLocation: VSLocation;
+    public readonly srcLocation: DocumentRange;
     public name: string;
     public body: StatementNode[];
 
-    constructor(srcLocation: VSLocation, name: string, body: StatementNode[]) {
+    constructor(srcLocation: DocumentRange, name: string, body: StatementNode[]) {
         super();
         this.srcLocation = srcLocation;
         this.name = name;
@@ -177,10 +178,10 @@ export class LiteralNode extends ExpressionNode {
 }
 
 export class IdentifierNode extends ExpressionNode {
-    public readonly srcLocation: VSLocation;
+    public readonly srcLocation: DocumentRange;
     public name: string;
 
-    constructor(srcLocation: VSLocation, name: string) {
+    constructor(srcLocation: DocumentRange, name: string) {
         super();
         this.srcLocation = srcLocation;
         this.name = name;
@@ -306,11 +307,11 @@ export class ParameterNode extends ASTNode {
 }
 
 export class LabelNameNode extends ExpressionNode {
-    public readonly srcLocation: VSLocation;
+    public readonly srcLocation: DocumentRange;
     public globalName: string | null;
     public localName: string | null;
 
-    constructor(srcLocation: VSLocation, globalName: string | null, localName: string | null) {
+    constructor(srcLocation: DocumentRange, globalName: string | null, localName: string | null) {
         super();
         this.srcLocation = srcLocation;
         this.globalName = globalName;
@@ -385,10 +386,10 @@ export class LabelStatementNode extends StatementNode {
 }
 
 export class ImageNameNode extends ExpressionNode {
-    public readonly srcLocation: VSLocation;
+    public readonly srcLocation: DocumentRange;
     public nameComponents: IdentifierNode[] | null;
 
-    constructor(srcLocation: VSLocation, nameComponents: IdentifierNode[] | null) {
+    constructor(srcLocation: DocumentRange, nameComponents: IdentifierNode[] | null) {
         super();
         this.srcLocation = srcLocation;
         this.nameComponents = nameComponents;

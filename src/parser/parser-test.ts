@@ -2,16 +2,12 @@ import { DocumentParser } from "./parser";
 
 import { RpyProgram } from "../interpreter/program";
 import { LogCategory, logCatMessage } from "../logger";
+import { DocumentRange, LogLevel, TextDocument } from "../utilities/vscode-wrappers";
 import { AST } from "./ast-nodes";
 import { RenpyStatementRule } from "./renpy-grammar-rules";
 
-export async function testParser() {
-    const activeEditor = window.activeTextEditor;
-    if (!activeEditor || activeEditor.document.languageId !== "renpy") {
-        return;
-    }
-
-    const parser = new DocumentParser(activeEditor.document);
+export async function testParser(document: TextDocument) {
+    const parser = new DocumentParser(document);
     await parser.initialize();
 
     const statementParser = new RenpyStatementRule();
@@ -30,10 +26,10 @@ export async function testParser() {
         }
     }
 
-    const errors: VSRange[] = [];
+    const errors: DocumentRange[] = [];
     for (const error of parser.errors) {
         logCatMessage(LogLevel.Error, LogCategory.Parser, parser.getErrorMessage(error));
-        errors.push(error.errorRange.toVSRange(activeEditor.document));
+        errors.push(error.errorRange);
     }
 
     logCatMessage(LogLevel.Debug, LogCategory.Parser, ast.toString());
@@ -45,9 +41,7 @@ export async function testParser() {
         logCatMessage(LogLevel.Error, LogCategory.Parser, error.message);
 
         if (error.errorLocation !== null) {
-            errors.push(error.errorLocation.range);
+            errors.push(error.errorLocation);
         }
     }
-
-    activeEditor.setDecorations(errorDecorationType, errors);
 }

@@ -1,28 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { isShippingBuild } from "./extension";
 import { LogLevel } from "./utilities/vscode-wrappers";
-
-export function initializeLoggingSystems(context: ExtensionContext) {
-    context.subscriptions.push(outputChannel);
-
-    outputChannel.clear();
-
-    statusBar.name = "Ren'Py Language Extension Status";
-    statusBar.tooltip = "Ren'Py Language Extension Status";
-    context.subscriptions.push(statusBar);
-}
-
-export function updateStatusBar(text: string) {
-    if (text === "") {
-        statusBar.hide();
-        return;
-    }
-
-    logCatMessage(LogLevel.Info, LogCategory.Status, text);
-    statusBar.text = text;
-    statusBar.show();
-}
 
 // eslint-disable-next-line no-shadow
 export const enum LogCategory {
@@ -51,7 +29,6 @@ export function logMessage(level: LogLevel, message: string): void {
 
 export function logCatMessage(level: LogLevel, category: LogCategory, message: string): void {
     const outputMsg = `${getLogCategoryPrefix(category)} > ${message}`;
-
     switch (level) {
         case LogLevel.Trace:
             console.trace(outputMsg);
@@ -67,32 +44,6 @@ export function logCatMessage(level: LogLevel, category: LogCategory, message: s
             break;
         case LogLevel.Error:
             console.error(outputMsg);
-            break;
-    }
-
-    debugLog(level, outputMsg);
-}
-
-function debugLog(level: LogLevel, message: string) {
-    if (isShippingBuild()) {
-        return;
-    }
-
-    switch (level) {
-        case LogLevel.Trace:
-            console.trace(message);
-            break;
-        case LogLevel.Debug:
-            console.debug(message);
-            break;
-        case LogLevel.Info:
-            console.info(message);
-            break;
-        case LogLevel.Warning:
-            console.warn(message);
-            break;
-        case LogLevel.Error:
-            console.error(message);
             break;
     }
 }

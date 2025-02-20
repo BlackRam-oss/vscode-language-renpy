@@ -2,7 +2,6 @@
 import { assert } from "console";
 import { performance } from "perf_hooks";
 
-import { isShippingBuild } from "../extension";
 import { LogCategory, logCatMessage } from "../logger";
 import { Stack } from "../utilities/stack";
 import { escapeRegExpCharacters } from "../utilities/utils";
@@ -334,28 +333,9 @@ class DocumentTokenizer {
 
             const [startPos, endPos] = match.indices![i];
 
-            if (captures[i] === undefined) {
-                if (!isShippingBuild()) {
-                    // If this is a 'begin' capture it's also possible to have it matched on the end pattern. Let's make sure we don't report false positives.
-                    if (captureSource === CaptureSource.BeginCaptures && pattern.end !== undefined) {
-                        // test the end pattern for backreferences to this capture index
-                        const captureRe = new RegExp(`\\\\${i}`, "g");
-                        if (captureRe.test(pattern.end.source)) {
-                            continue;
-                        }
-                    }
-
-                    const pos = this.positionAt(startPos);
-                    logCatMessage(
-                        LogLevel.Debug,
-                        LogCategory.Tokenizer,
-                        `There is no pattern defined for capture group '${i}', on a pattern that matched '${match[i]}' near L:${pos.line + 1} C:${pos.character + 1}.\nThis should probably be added or be a non-capturing group.`
-                    );
-                }
-
+            if (captures[i] === undefined)
                 continue;
-            }
-
+            
             const p = captures[i];
             const captureNode = new TreeNode();
             if (p.token) {
