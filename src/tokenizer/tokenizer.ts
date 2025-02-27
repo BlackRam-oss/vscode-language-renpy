@@ -41,7 +41,7 @@ export class Tokenizer {
         return this._uniquePatternCount;
     }
 
-    public static async tokenizeDocument(document: TextDocument) {
+    public static tokenizeDocument(document: TextDocument) {
         this.setupAndValidatePatterns();
 
         if (RUN_BENCHMARKS) {
@@ -53,20 +53,20 @@ export class Tokenizer {
             return cachedTokens.tokens;
         }
 
-        return await this.runTokenizer(document);
+        return this.runTokenizer(document);
     }
 
     public static clearTokenCache() {
         this._tokenCache.clear();
     }
 
-    private static async runTokenizer(document: TextDocument) {
+    private static runTokenizer(document: TextDocument) {
         logCatMessage(LogLevel.Info, LogCategory.Tokenizer, `Running tokenizer on document: "${document.filePath}"`);
         const tokenizer = new DocumentTokenizer(document);
 
         const t0 = performance.now();
 
-        await Promise.resolve(tokenizer.tokenize());
+        tokenizer.tokenize();
 
         // TODO: Need to mark all these functions async for this to work properly
         /*await withTimeout(, TOKENIZER_TIMEOUT, () => {

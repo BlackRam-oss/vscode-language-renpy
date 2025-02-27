@@ -3,10 +3,10 @@
 import { RpyProgram } from "../interpreter/program";
 import { LogCategory, logCatMessage } from "../logger";
 import { CharacterTokenType, MetaTokenType, TokenType } from "../tokenizer/renpy-tokens";
-import { Range, Token, TokenListIterator, TokenPosition, tokenTypeToStringMap } from "../tokenizer/token-definitions";
+import { Token, TokenListIterator, TokenPosition, tokenTypeToStringMap } from "../tokenizer/token-definitions";
 import { Tokenizer } from "../tokenizer/tokenizer";
 import { Vector } from "../utilities/vector";
-import { DocumentRange, LogLevel, TextDocument  } from "../utilities/vscode-wrappers";
+import { DocumentRange, LogLevel, TextDocument } from "../utilities/vscode-wrappers";
 import { AST, ASTNode } from "./ast-nodes";
 import { GrammarRule } from "./grammar-rules";
 import { RenpyStatementRule } from "./renpy-grammar-rules";
@@ -104,13 +104,13 @@ export class DocumentParser {
     }
 
     // TODO: This should not be user facing code, will lead to bugs. Same for the tokenizer.
-    public async initialize() {
+    public  initialize() {
         if (this._parsed) {
             throw new Error("DocumentParser.parse() called twice.");
         }
 
         this._parsed = true;
-        const tokens = await Tokenizer.tokenizeDocument(this._document);
+        const tokens =  Tokenizer.tokenizeDocument(this._document);
         this._it = tokens.getIterator();
         this._it.setFilter(new Set([MetaTokenType.Comment, CharacterTokenType.Whitespace]));
 
