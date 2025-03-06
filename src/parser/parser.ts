@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { ParseErrorTypeEnum } from "src/enums";
 import { RpyProgram } from "../interpreter/program";
 import { LogCategory, logCatMessage } from "../logger";
 import { CharacterTokenType, MetaTokenType, TokenType } from "../tokenizer/renpy-tokens";
@@ -11,15 +12,8 @@ import { AST, ASTNode } from "./ast-nodes";
 import { GrammarRule } from "./grammar-rules";
 import { RenpyStatementRule } from "./renpy-grammar-rules";
 
-// eslint-disable-next-line no-shadow
-export const enum ParseErrorType {
-    UnexpectedToken,
-    UnexpectedEndOfLine,
-    UnexpectedEndOfFile,
-}
-
 export interface ParseError {
-    type: ParseErrorType;
+    type: ParseErrorTypeEnum;
     currentToken: Token;
     nextToken: Token;
     expectedTokenType: TokenType | null;
@@ -119,7 +113,7 @@ export class DocumentParser {
 
     public next() {
         if (!this._it.hasNext()) {
-            this.addError(ParseErrorType.UnexpectedEndOfFile);
+            this.addError(ParseErrorTypeEnum.UnexpectedEndOfFile);
             return;
         }
         this._currentToken = this._it.token;
@@ -177,7 +171,7 @@ export class DocumentParser {
             this.next();
             return true;
         }
-        this.addError(ParseErrorType.UnexpectedToken, tokenType);
+        this.addError(ParseErrorTypeEnum.UnexpectedToken, tokenType);
         return false;
     }
 
@@ -207,7 +201,7 @@ export class DocumentParser {
                 return true;
             }
         }
-        this.addError(ParseErrorType.UnexpectedToken);
+        this.addError(ParseErrorTypeEnum.UnexpectedToken);
         return false;
     }
 
@@ -217,7 +211,7 @@ export class DocumentParser {
                 return rule.parse(this);
             }
         }
-        this.addError(ParseErrorType.UnexpectedEndOfLine);
+        this.addError(ParseErrorTypeEnum.UnexpectedEndOfLine);
         return null;
     }
 
@@ -233,8 +227,13 @@ export class DocumentParser {
         }
     }
 
+    /**
+     * Expects an end of line token. If an unexpected end of line is found, an error is added to the error list.
+     * @returns True if an unexpected end of line was found.
+     */
     public expectEOL() {
-        if (!this.peekAnyOf([CharacterTokenType.NewLine, MetaTokenType.EOF])) {
+        const isUnexpectedEndOfLine = !this.peekAnyOf([CharacterTokenType.NewLine, MetaTokenType.EOF])
+        if (isUnexpectedEndOfLine) {
             const start = this.peekNext();
 
             this.skipToEOL();
@@ -242,21 +241,21 @@ export class DocumentParser {
             const end = this.current();
 
             this._errors.pushBack({
-                type: ParseErrorType.UnexpectedEndOfLine,
+                type: ParseErrorTypeEnum.UnexpectedEndOfLine,
                 currentToken: start,
                 nextToken: end,
                 expectedTokenType: null,
                 errorRange: new DocumentRange(start.startPos, end.endPos),
             });
         }
-        return this.peekAnyOf([CharacterTokenType.NewLine, MetaTokenType.EOF]);
+        return isUnexpectedEndOfLine;
     }
 
     public get errors() {
         return this._errors;
     }
 
-    public addError(errorType: ParseErrorType, expectedToken: TokenType | null = null, errorRange: DocumentRange | null = null) {
+    public addError(errorType: ParseErrorTypeEnum, expectedToken: TokenType | null = null, errorRange: DocumentRange | null = null) {
         const nextToken = this.peekNext();
         this._errors.pushBack({
             type: errorType,
@@ -290,11 +289,11 @@ export class DocumentParser {
 
     public getErrorMessage(error: ParseError) {
         switch (error.type) {
-            case ParseErrorType.UnexpectedEndOfFile:
+            case ParseErrorTypeEnum.UnexpectedEndOfFile:
                 return "Unexpected end of file";
-            case ParseErrorType.UnexpectedToken:
+            case ParseErrorTypeEnum.UnexpectedToken:
                 return `Syntax error: Expected token of type '${this.getTokenTypeString(error.expectedTokenType)}', but got '${this.getTokenTypeString(error.nextToken.type)}'\n\tat: (${error.nextToken.startPos}) -> (${error.nextToken.endPos})`;
-            case ParseErrorType.UnexpectedEndOfLine:
+            case ParseErrorTypeEnum.UnexpectedEndOfLine:
                 return `Syntax error: Unexpected end of line.\n\tat: (${error.currentToken.startPos}) -> (${error.nextToken.endPos})`;
         }
     }
