@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ParseErrorTypeEnum } from "src/enums";
+import { ParseErrorTypeEnum } from "../enums";
 import { RpyProgram } from "../interpreter/program";
 import { LogCategory, logCatMessage } from "../logger";
 import { CharacterTokenType, MetaTokenType, TokenType } from "../tokenizer/renpy-tokens";
