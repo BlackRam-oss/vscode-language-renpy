@@ -1,6 +1,7 @@
 const enum ParseErrorTypeEnum {
     UnexpectedToken = "UnexpectedToken",
-    UnexpectedEndOfLine = "UnexpectedEndOfLine",
+    ExpectedEndOfLine = "ExpectedEndOfLine",
     UnexpectedEndOfFile = "UnexpectedEndOfFile",
+    InvalidMonologueType = "InvalidMonologueType",
 }
 export default ParseErrorTypeEnum;
