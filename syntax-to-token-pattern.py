@@ -633,8 +633,8 @@ def generate_token_patterns():
         contents += "\n"
 
         # Add all source import from all states, but only the unique ones
-        source_imports = set(renpy_state.source_imports + atl_state.source_imports + screen_state.source_imports + style_state.source_imports + python_state.source_imports)
-        
+        source_imports = list(dict.fromkeys(renpy_state.source_imports + atl_state.source_imports + screen_state.source_imports + style_state.source_imports + python_state.source_imports))
+
         for source_import in source_imports:
             contents += f"import * as {titleCase(source_import)}Patterns from \"./{source_import}-token-patterns.g\";\n"
 
