@@ -1,38 +1,32 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { LogLevel, TextDocument, Uri, Location as VSLocation, Range as VSRange, workspace } from "vscode";
+
+import { ParseErrorTypeEnum } from "../enums";
+import { RpyProgram } from "../interpreter/program";
+import { LogCategory, logCatMessage } from "../logger";
+import { CharacterTokenType, MetaTokenType, TokenType } from "../tokenizer/renpy-tokens";
+import { Token, TokenListIterator, TokenPosition, tokenTypeToStringMap } from "../tokenizer/token-definitions";
+import { Tokenizer } from "../tokenizer/tokenizer";
+import { Vector } from "../utilities/vector";
+import { DocumentRange, LogLevel, TextDocument } from "../utilities/vscode-wrappers";
 import { AST, ASTNode } from "./ast-nodes";
 import { GrammarRule } from "./grammar-rules";
-import { Tokenizer } from "../tokenizer/tokenizer";
-import { CharacterTokenType, MetaTokenType, TokenType } from "../tokenizer/renpy-tokens";
-import { Token, TokenPosition, TokenListIterator, tokenTypeToStringMap, Range } from "../tokenizer/token-definitions";
-import { Vector } from "../utilities/vector";
-import { LogCategory, logCatMessage } from "../logger";
-import { RpyProgram } from "../interpreter/program";
 import { RenpyStatementRule } from "./renpy-grammar-rules";
 
-// eslint-disable-next-line no-shadow
-export const enum ParseErrorType {
-    UnexpectedToken,
-    ExpectedEndOfLine,
-    UnexpectedEndOfFile,
-    InvalidMonologueType,
-}
-
 export interface ParseError {
-    type: ParseErrorType;
+    type: ParseErrorTypeEnum;
     currentToken: Token;
     nextToken: Token;
     expectedTokenType: TokenType | null;
-    errorRange: Range;
+    errorRange: DocumentRange;
 }
 
 type DocumentCache = { readonly documentVersion: number; readonly program: RpyProgram };
 
 export class Parser {
-    private static _documentCache = new Map<Uri, DocumentCache>();
+    private static _documentCache = new Map<string, DocumentCache>();
 
     public static async parseDocument(document: TextDocument) {
-        const cachedTokens = this._documentCache.get(document.uri);
+        const cachedTokens = this._documentCache.get(document.filePath);
         if (cachedTokens?.documentVersion === document.version) {
             return cachedTokens.program;
         }
@@ -41,7 +35,7 @@ export class Parser {
     }
 
     private static async runParser(document: TextDocument) {
-        logCatMessage(LogLevel.Info, LogCategory.Parser, `Running parser on document: "${workspace.asRelativePath(document.uri, true)}"`);
+        logCatMessage(LogLevel.Info, LogCategory.Parser, `Running parser on document: "${document.filePath}"`);
 
         const parser = new DocumentParser(document);
         await parser.initialize();
@@ -67,7 +61,7 @@ export class Parser {
         const program = new RpyProgram();
         ast.process(program);
 
-        this._documentCache.set(document.uri, { documentVersion: document.version, program });
+        this._documentCache.set(document.filePath, { documentVersion: document.version, program });
         return program;
     }
 }
@@ -91,26 +85,26 @@ export class DocumentParser {
         return this._document;
     }
 
-    public locationFromCurrent(): VSLocation {
-        return new VSLocation(this._document.uri, this.current().getVSRange());
+    public locationFromCurrent(): DocumentRange {
+        return this.current().getDocumentRange();
     }
 
-    public locationFromNext(): VSLocation {
-        return new VSLocation(this._document.uri, this.peekNext().getVSRange());
+    public locationFromNext(): DocumentRange {
+        return this.peekNext().getDocumentRange();
     }
 
-    public locationFromRange(range: VSRange): VSLocation {
-        return new VSLocation(this._document.uri, range);
+    public locationFromRange(range: DocumentRange): DocumentRange {
+        return range;
     }
 
     // TODO: This should not be user facing code, will lead to bugs. Same for the tokenizer.
-    public async initialize() {
+    public  initialize() {
         if (this._parsed) {
             throw new Error("DocumentParser.parse() called twice.");
         }
 
         this._parsed = true;
-        const tokens = await Tokenizer.tokenizeDocument(this._document);
+        const tokens =  Tokenizer.tokenizeDocument(this._document);
         this._it = tokens.getIterator();
         this._it.setFilter(new Set([MetaTokenType.Comment, CharacterTokenType.Whitespace]));
 
@@ -122,7 +116,7 @@ export class DocumentParser {
      */
     public next() {
         if (!this._it.hasNext()) {
-            this.addError(ParseErrorType.UnexpectedEndOfFile);
+            this.addError(ParseErrorTypeEnum.UnexpectedEndOfFile);
             return;
         }
         this._currentToken = this._it.token;
@@ -220,7 +214,7 @@ export class DocumentParser {
             this.next();
             return true;
         }
-        this.addError(ParseErrorType.UnexpectedToken, tokenType);
+        this.addError(ParseErrorTypeEnum.UnexpectedToken, tokenType);
         return false;
     }
 
@@ -270,7 +264,7 @@ export class DocumentParser {
                 return true;
             }
         }
-        this.addError(ParseErrorType.UnexpectedToken);
+        this.addError(ParseErrorTypeEnum.UnexpectedToken);
         return false;
     }
 
@@ -285,7 +279,7 @@ export class DocumentParser {
                 return rule.parse(this);
             }
         }
-        this.addError(ParseErrorType.ExpectedEndOfLine);
+        this.addError(ParseErrorTypeEnum.ExpectedEndOfLine);
         return null;
     }
 
@@ -321,11 +315,11 @@ export class DocumentParser {
             const end = this.current();
 
             this._errors.pushBack({
-                type: ParseErrorType.ExpectedEndOfLine,
+                type: ParseErrorTypeEnum.ExpectedEndOfLine,
                 currentToken: start,
                 nextToken: end,
                 expectedTokenType: null,
-                errorRange: new Range(start.startPos.charStartOffset, end.endPos.charStartOffset),
+                errorRange: new DocumentRange(start.startPos, end.endPos),
             });
         }
         return isEndOfLine;
@@ -335,14 +329,14 @@ export class DocumentParser {
         return this._errors;
     }
 
-    public addError(errorType: ParseErrorType, expectedToken: TokenType | null = null, errorRange: Range | null = null) {
+    public addError(errorType: ParseErrorTypeEnum, expectedToken: TokenType | null = null, errorRange: DocumentRange | null = null) {
         const nextToken = this.peekNext();
         this._errors.pushBack({
             type: errorType,
             currentToken: this.current(),
             nextToken: nextToken,
             expectedTokenType: expectedToken,
-            errorRange: errorRange ?? new Range(nextToken.startPos.charStartOffset, nextToken.endPos.charStartOffset),
+            errorRange: errorRange ?? new DocumentRange(nextToken.startPos, nextToken.endPos),
         });
     }
 
@@ -369,13 +363,13 @@ export class DocumentParser {
 
     public getErrorMessage(error: ParseError) {
         switch (error.type) {
-            case ParseErrorType.UnexpectedEndOfFile:
+            case ParseErrorTypeEnum.UnexpectedEndOfFile:
                 return "Unexpected end of file";
-            case ParseErrorType.UnexpectedToken:
+            case ParseErrorTypeEnum.UnexpectedToken:
                 return `Syntax error: Expected token of type '${this.getTokenTypeString(error.expectedTokenType)}', but got '${this.getTokenTypeString(error.nextToken.type)}'\n\tat: (${error.nextToken.startPos}) -> (${error.nextToken.endPos})`;
-            case ParseErrorType.ExpectedEndOfLine:
+            case ParseErrorTypeEnum.ExpectedEndOfLine:
                 return `Syntax error: Expected end of line.\n\tat: (${error.currentToken.startPos}) -> (${error.nextToken.endPos})`;
-            case ParseErrorType.InvalidMonologueType:
+            case ParseErrorTypeEnum.InvalidMonologueType:
                 return `Syntax error: Invalid monologue type. Expected one of: double, single, or none.\n\tat: (${error.errorRange.start}) -> (${error.errorRange.end})`;
         }
     }

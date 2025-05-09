@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { LogLevel, Position, TextDocument, Range as VSRange } from "vscode";
-import { CharacterTokenType, EntityTokenType, EscapedCharacterTokenType, KeywordTokenType, LiteralTokenType, MetaTokenType, OperatorTokenType, TokenType, TokenTypeIndex, TypeOfTokenType } from "./renpy-tokens";
-import { TokenPattern, TokenRangePattern, TokenMatchPattern, TokenRepoPattern } from "./token-pattern-types";
-import { Vector } from "../utilities/vector";
-import { LogCategory, logCatMessage, logMessage } from "../logger";
+
+import { LogCategory, logCatMessage } from "../logger";
 import { EnumToString } from "../utilities/utils";
+import { Vector } from "../utilities/vector";
+import { DocumentRange, LogLevel, TextDocument  } from "../utilities/vscode-wrappers";
+import { CharacterTokenType, EntityTokenType, EscapedCharacterTokenType, KeywordTokenType, LiteralTokenType, MetaTokenType, OperatorTokenType, TokenType, TokenTypeIndex, TypeOfTokenType } from "./renpy-tokens";
+import { TokenMatchPattern, TokenPattern, TokenRangePattern, TokenRepoPattern } from "./token-pattern-types";
 
 export class Range {
     start: number;
@@ -23,11 +24,6 @@ export class Range {
         return position >= this.start && position <= this.end;
     }
 
-    public toVSRange(document: TextDocument): VSRange {
-        const start = document.positionAt(this.start);
-        const end = document.positionAt(this.end);
-        return new VSRange(start, end);
-    }
 }
 
 export class TokenPosition {
@@ -93,15 +89,8 @@ export class Token {
         this.metaTokens = new Vector<TokenType>();
     }
 
-    public getVSRange() {
-        const start = new Position(this.startPos.line, this.startPos.character);
-        const end = new Position(this.endPos.line, this.endPos.character);
-
-        if (start.isEqual(end)) {
-            logMessage(LogLevel.Warning, `Empty token detected at L: ${start.line + 1}, C: ${start.character + 1} !`);
-        }
-
-        return new VSRange(start, end);
+    public getDocumentRange() {
+        return new DocumentRange(this.startPos, this.endPos);
     }
 
     public getRange() {
@@ -157,7 +146,7 @@ export class Token {
     }
 
     public getValue(document: TextDocument) {
-        return document.getText(this.getVSRange());
+        return document.getText(this.getDocumentRange());
     }
 
     public toString() {

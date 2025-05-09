@@ -2,7 +2,7 @@
  * A dynamically sized array that can be used to store items of any type.
  */
 export class Vector<T> implements Iterable<T> {
-    private buffer: Array<T | null> = [];
+    buffer: Array<T | null> = [];
 
     private headPtr = -1;
     private itemCount = 0;

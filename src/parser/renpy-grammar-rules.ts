@@ -1,6 +1,10 @@
+import { ParseErrorTypeEnum } from "../enums";
 import { CharacterTokenType, EntityTokenType, KeywordTokenType, LiteralTokenType, MetaTokenType, OperatorTokenType } from "../tokenizer/renpy-tokens";
+import { Range } from "../tokenizer/token-definitions";
+import { DocumentRange } from "../utilities/vscode-wrappers";
 import {
     AssignmentOperationNode,
+    CallStatementNode,
     CameraStatementNode,
     DefaultStatementNode,
     DefineStatementNode,
@@ -32,14 +36,12 @@ import {
     ShowLayerStatementNode,
     ShowStatementNode,
     StatementNode,
-    CallStatementNode,
     TransformStatementNode,
-    WithStatementNode,
     WhileStatementNode,
+    WithStatementNode,
 } from "./ast-nodes";
-import { AssignmentOperationRule, GrammarRule, IntegerLiteralRule, PythonExpressionRule, IdentifierRule, StringLiteralRule, SimpleExpressionRule, ParametersRule } from "./grammar-rules";
-import { DocumentParser, ParseErrorType } from "./parser";
-import { Range } from "../tokenizer/token-definitions";
+import { AssignmentOperationRule, GrammarRule, IdentifierRule, IntegerLiteralRule, ParametersRule, PythonExpressionRule, SimpleExpressionRule, StringLiteralRule } from "./grammar-rules";
+import { DocumentParser } from "./parser";
 
 const integerParser = new IntegerLiteralRule();
 const stringParser = new StringLiteralRule();
@@ -503,7 +505,7 @@ export class LabelNameRule extends GrammarRule<LabelNameNode> {
     }
 
     public parse(parser: DocumentParser): LabelNameNode {
-        const start = parser.peekNext().startPos.charStartOffset;
+        const start = parser.peekNext().startPos;
 
         let globalName: string | null = null;
         let localName: string | null = null;
@@ -520,9 +522,9 @@ export class LabelNameRule extends GrammarRule<LabelNameNode> {
                 localName = parser.currentValue();
             }
         }
-        const end = parser.current().endPos.charStartOffset;
+        const end = parser.current().endPos;
 
-        const location = parser.locationFromRange(new Range(start, end).toVSRange(parser.document));
+        const location = new DocumentRange(start, end);
 
         return new LabelNameNode(location, globalName, localName);
     }
@@ -568,11 +570,11 @@ export class ImageNameComponentRule extends GrammarRule<IdentifierNode> {
     }
 
     public parse(parser: DocumentParser): IdentifierNode {
-        const start = parser.peekNext().startPos.charStartOffset;
+        const start = parser.peekNext().startPos;
         parser.requireToken(EntityTokenType.ImageName);
         const value = parser.currentValue();
-        const end = parser.current().endPos.charStartOffset;
-        const location = parser.locationFromRange(new Range(start, end).toVSRange(parser.document));
+        const end = parser.current().endPos;
+        const location = new DocumentRange(start, end);
         return new IdentifierNode(location, value);
     }
 }
@@ -589,7 +591,7 @@ export class ImageNameRule extends GrammarRule<ImageNameNode> {
     }
 
     public parse(parser: DocumentParser): ImageNameNode | null {
-        const start = parser.peekNext().startPos.charStartOffset;
+        const start = parser.peekNext().startPos;
 
         const components: IdentifierNode[] = [];
 
@@ -606,12 +608,12 @@ export class ImageNameRule extends GrammarRule<ImageNameNode> {
         if (components.length === 0) {
             // TODO: better error handling
             // throw new Error("Expected at least one image name component.");
-            parser.addError(ParseErrorType.UnexpectedToken, EntityTokenType.ImageName);
+            parser.addError(ParseErrorTypeEnum.UnexpectedToken, EntityTokenType.ImageName);
             return null;
         }
 
-        const end = parser.current().endPos.charStartOffset;
-        const location = parser.locationFromRange(new Range(start, end).toVSRange(parser.document));
+        const end = parser.current().endPos;
+        const location = new DocumentRange(start, end);
         return new ImageNameNode(location, components);
     }
 }
@@ -1596,7 +1598,7 @@ export class RpyMonologueStatementRule extends GrammarRule<RpyMonologueStatement
             quotationType = "none";
         } else {
             // Error: Expected a quote type
-            parser.addError(ParseErrorType.InvalidMonologueType, parser.current().type, parser.current().getRange());
+            parser.addError(ParseErrorTypeEnum.InvalidMonologueType, parser.current().type, parser.current().getRange());
             return null;
         }
 

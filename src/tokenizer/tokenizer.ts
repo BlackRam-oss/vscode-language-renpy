@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { assert } from "console";
 import { performance } from "perf_hooks";
-import { workspace } from "vscode";
-import { Token, isRangePattern, isMatchPattern, isRepoPattern, TokenPosition, TokenTree, TreeNode, Range } from "./token-definitions";
-import { RenpyPatterns } from "./token-patterns.g";
-import { Stack } from "../utilities/stack";
-import { Vector } from "../utilities/vector";
-import { TokenPatternCapture, TokenCapturePattern, TokenRepoPattern, TokenRangePattern, TokenMatchPattern } from "./token-pattern-types";
+
 import { LogCategory, logCatMessage } from "../logger";
+import { Stack } from "../utilities/stack";
 import { escapeRegExpCharacters } from "../utilities/utils";
-import { isShippingBuild } from "../extension";
+import { Vector } from "../utilities/vector";
 import { DocumentRange, LogLevel, TextDocument } from "../utilities/vscode-wrappers";
+import { isMatchPattern, isRangePattern, isRepoPattern, Range, Token, TokenPosition, TokenTree, TreeNode } from "./token-definitions";
+import { TokenCapturePattern, TokenMatchPattern, TokenPatternCapture, TokenRangePattern, TokenRepoPattern } from "./token-pattern-types";
+import { RenpyPatterns } from "./token-patterns.g";
 
 interface MatchScanResult {
     pattern: ExTokenPattern;
@@ -42,7 +41,7 @@ export class Tokenizer {
         return this._uniquePatternCount;
     }
 
-    public static async tokenizeDocument(document: TextDocument) {
+    public static tokenizeDocument(document: TextDocument) {
         this.setupAndValidatePatterns();
 
         if (RUN_BENCHMARKS) {
@@ -54,20 +53,20 @@ export class Tokenizer {
             return cachedTokens.tokens;
         }
 
-        return await this.runTokenizer(document);
+        return this.runTokenizer(document);
     }
 
     public static clearTokenCache() {
         this._tokenCache.clear();
     }
 
-    private static async runTokenizer(document: TextDocument) {
-        logCatMessage(LogLevel.Info, LogCategory.Tokenizer, `Running tokenizer on document: "${workspace.asRelativePath(document.filePath, true)}"`);
+    private static runTokenizer(document: TextDocument) {
+        logCatMessage(LogLevel.Info, LogCategory.Tokenizer, `Running tokenizer on document: "${document.filePath}"`);
         const tokenizer = new DocumentTokenizer(document);
 
         const t0 = performance.now();
 
-        await Promise.resolve(tokenizer.tokenize());
+        tokenizer.tokenize();
 
         // TODO: Need to mark all these functions async for this to work properly
         /*await withTimeout(, TOKENIZER_TIMEOUT, () => {
@@ -335,28 +334,9 @@ class DocumentTokenizer {
 
             const [startPos, endPos] = match.indices![i];
 
-            if (captures[i] === undefined) {
-                if (!isShippingBuild()) {
-                    // If this is a 'begin' capture it's also possible to have it matched on the end pattern. Let's make sure we don't report false positives.
-                    if (captureSource === CaptureSource.BeginCaptures && pattern.end !== undefined) {
-                        // test the end pattern for backreferences to this capture index
-                        const captureRe = new RegExp(`\\\\${i}`, "g");
-                        if (captureRe.test(pattern.end.source)) {
-                            continue;
-                        }
-                    }
-
-                    const pos = this.positionAt(startPos);
-                    logCatMessage(
-                        LogLevel.Debug,
-                        LogCategory.Tokenizer,
-                        `There is no pattern defined for capture group '${i}', on a pattern that matched '${match[i]}' near L:${pos.line + 1} C:${pos.character + 1}.\nThis should probably be added or be a non-capturing group.`
-                    );
-                }
-
+            if (captures[i] === undefined)
                 continue;
-            }
-
+            
             const p = captures[i];
             const captureNode = new TreeNode();
             if (p.token) {

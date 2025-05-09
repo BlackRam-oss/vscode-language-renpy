@@ -1,24 +1,25 @@
-import { Location as VSLocation } from "vscode";
+
+import { DocumentRange } from "src/utilities/vscode-wrappers";
 import { Vector } from "../utilities/vector";
 
 export class RpySymbol {
-    public readonly definitionLocation: VSLocation;
+    public readonly definitionLocation: DocumentRange;
     public identifier: string;
-    public references = new Vector<VSLocation>();
+    public references = new Vector<DocumentRange>();
 
-    constructor(definitionLocation: VSLocation, identifier: string) {
+    constructor(definitionLocation: DocumentRange, identifier: string) {
         this.definitionLocation = definitionLocation;
         this.identifier = identifier;
     }
 
-    public addReference(reference: VSLocation) {
+    public addReference(reference: DocumentRange) {
         this.references.pushBack(reference);
     }
 }
 
 export interface CompileError {
     message: string;
-    errorLocation: VSLocation | null;
+    errorLocation: DocumentRange | null;
 }
 
 export interface DuplicateDefinitionError extends CompileError {
@@ -44,7 +45,7 @@ export class Scope {
      * @param definitionLocation The location of the symbol's definition.
      * @param noShadow Whether to throw an error if a symbol with the same identifier already exists in a parent scope.
      */
-    public defineSymbol(identifier: string, definitionLocation: VSLocation, noShadow = true): RpySymbol | null {
+    public defineSymbol(identifier: string, definitionLocation: DocumentRange, noShadow = true): RpySymbol | null {
         const symbol = new RpySymbol(definitionLocation, identifier);
 
         if (this.symbols.has(identifier)) {
@@ -93,7 +94,7 @@ export class Scope {
      * @param definitionLocation The location of the symbol's definition.
      * @param noShadow Whether to throw an error if a symbol with the same identifier already exists in a parent scope.
      */
-    public defineLabel(identifier: string, definitionLocation: VSLocation, noShadow = true): RpySymbol | null {
+    public defineLabel(identifier: string, definitionLocation: DocumentRange, noShadow = true): RpySymbol | null {
         if (this.labels.has(identifier)) {
             const error: DuplicateDefinitionError = {
                 message: `A label with the identifier "${identifier}" has already been defined.`,
